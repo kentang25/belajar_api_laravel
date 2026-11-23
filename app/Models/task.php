@@ -12,4 +12,5 @@ class Task extends Model
         'content',
         'is_completed',
     ];
+    
 }

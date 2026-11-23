@@ -4,20 +4,20 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Post;
+use App\Models\Task;
 
 class TaskController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $posts = Post::all();
+        $tasks = Task::where('user_id', $request->user()->id)->latest()->get();
+
         return response()->json([
             'status' => 'success',
-            'message' => 'Posts retrieved successfully',
-            'data' => $posts
+            'data' => $tasks,
         ], 200);
     }
 
@@ -27,16 +27,21 @@ class TaskController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'title' => 'required|string|max:225',
-            'content' => 'required|string',
+            'title' => 'required|string|max:255',
+            'content' => 'nullable|string',
+            'is_completed' => 'boolean',
         ]);
 
-        $post = Post::create($validated);
+        $task = Task::create([
+            'user_id' => $request->user()->id,
+            'title' => $validated['title'],
+            'content' => $validated['content'] ?? null,
+            'is_completed' => $validated['is_completed'] ?? false,
+        ]);
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Post created successfully',
-            'data' => $post,
+            'data' => $task,
         ], 201);
     }
 
@@ -53,14 +58,42 @@ class TaskController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $task = Task::where('user_id', $request->user()->id)->findOrFail($id);
+
+        if(!$task){
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Task not found',
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Task updated successfully',
+            'data' => $task,
+        ], 200);
+
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Request $request, $id)
     {
-        //
+        $task = Task::where('user_id', $request->user()->id)->findOrFail($id);
+
+        if(!$task){
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Task not found',
+            ], 404);
+        }
+
+        $task->delate();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Task deleted successfully'
+        ], 200);
     }
 }
