@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\TaskResource;
 use Illuminate\Http\Request;
 use App\Models\Task;
 
@@ -17,7 +18,7 @@ class TaskController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'data' => $tasks,
+            'data' => TaskResource::collection($tasks),
         ], 200);
     }
 
@@ -40,8 +41,9 @@ class TaskController extends Controller
         ]);
 
         return response()->json([
+            'message' => 'Task created successfully',
             'status' => 'success',
-            'data' => $task,
+            'data' => new TaskResource($task),
         ], 201);
     }
 
@@ -67,10 +69,12 @@ class TaskController extends Controller
             ], 404);
         }
 
+        $task->update($request->only(['title', 'content', 'is_completed']));
+
         return response()->json([
             'status' => 'success',
             'message' => 'Task updated successfully',
-            'data' => $task,
+            'data' => new TaskResource($task),
         ], 200);
 
     }
